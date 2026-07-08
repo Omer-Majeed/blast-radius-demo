@@ -1,0 +1,20 @@
+{
+  "name": "blast-radius-demo",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Local web app that scans repos for weak crypto (opengrep) and traces per-finding data-flow to sinks (joern).",
+  "workspaces": [
+    "apps/backend",
+    "apps/frontend"
+  ],
+  "scripts": {
+    "dev": "bash scripts/dev.sh",
+    "dev:backend": "npm --workspace apps/backend run dev",
+    "dev:frontend": "npm --workspace apps/frontend run dev",
+    "build": "npm --workspaces run build",
+    "install:all": "npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

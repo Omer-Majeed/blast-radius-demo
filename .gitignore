@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+data/
+*.log
+.DS_Store
+.env
+.env.local
+apps/backend/dist/
+apps/frontend/dist/
+apps/backend/workspace

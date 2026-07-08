@@ -1,0 +1,24 @@
+rules:
+  - id: node-crypto-sha1
+    message: SHA-1 is cryptographically broken. Migrate to SHA-256 (or SHA-3) using createHash("sha256").
+    severity: WARNING
+    languages: [typescript, javascript]
+    pattern-either:
+      - pattern: crypto.createHash("sha1")
+      - pattern: crypto.createHash('sha1')
+      - pattern: createHash("sha1")
+      - pattern: createHash('sha1')
+      - pattern: crypto.createHmac("sha1", ...)
+      - pattern: createHmac("sha1", ...)
+      - pattern: crypto.createHmac('sha1', ...)
+      - pattern: createHmac('sha1', ...)
+
+  - id: node-crypto-sha1-uppercase
+    message: SHA-1 is cryptographically broken. Migrate to SHA-256 (or SHA-3).
+    severity: WARNING
+    languages: [typescript, javascript]
+    pattern-either:
+      - pattern: crypto.createHash("SHA1")
+      - pattern: crypto.createHash("SHA-1")
+      - pattern: createHash("SHA1")
+      - pattern: createHash("SHA-1")

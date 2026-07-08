@@ -1,0 +1,37 @@
+# HTTP-related sinks: server response emitters and outbound HTTP clients.
+# These represent points where data leaves the process over HTTP.
+
+sinks:
+  - id: express-res-body
+    category: http-out
+    label: HTTP Response (Express)
+    severity: high
+    call_name_regex: "^(json|send|end|write|writeHead|status|jsonp|render)$"
+    receiver_regex: "^(res|response|reply)\\b"
+
+  - id: fetch-call
+    category: http-out
+    label: fetch()
+    severity: high
+    call_name_regex: "^fetch$"
+
+  - id: axios-method
+    category: http-out
+    label: Axios request
+    severity: high
+    call_name_regex: "^(get|post|put|delete|patch|head|options|request)$"
+    receiver_regex: "^axios\\b"
+
+  - id: got-call
+    category: http-out
+    label: got() (HTTP client)
+    severity: high
+    call_name_regex: "^(get|post|put|delete|patch|head|options)$"
+    receiver_regex: "^got\\b"
+
+  - id: http-request-node
+    category: http-out
+    label: Node http.request()
+    severity: high
+    call_name_regex: "^(request|get)$"
+    receiver_regex: "^(http|https)\\b"

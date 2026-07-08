@@ -1,0 +1,20 @@
+rules:
+  - id: node-crypto-md5
+    message: MD5 is cryptographically broken. Migrate to SHA-256 (or SHA-3) for hashing; use bcrypt/argon2 for passwords.
+    severity: WARNING
+    languages: [typescript, javascript]
+    pattern-either:
+      - pattern: crypto.createHash("md5")
+      - pattern: crypto.createHash('md5')
+      - pattern: createHash("md5")
+      - pattern: createHash('md5')
+      - pattern: crypto.createHmac("md5", ...)
+      - pattern: createHmac("md5", ...)
+
+  - id: node-crypto-md5-uppercase
+    message: MD5 is cryptographically broken. Migrate to SHA-256 or a KDF like bcrypt/argon2.
+    severity: WARNING
+    languages: [typescript, javascript]
+    pattern-either:
+      - pattern: crypto.createHash("MD5")
+      - pattern: createHash("MD5")

@@ -1,0 +1,60 @@
+# Database-related sinks: writes and reads that expose data to persistent
+# storage (or return it from queries).
+
+sinks:
+  # AWS DynamoDB (v3 SDK — uses .send() with a Command object)
+  - id: ddb-put
+    category: db-out
+    label: DynamoDB PutCommand
+    severity: high
+    call_name_regex: "^send$"
+    argument_contains: "PutCommand"
+
+  - id: ddb-update
+    category: db-out
+    label: DynamoDB UpdateCommand
+    severity: high
+    call_name_regex: "^send$"
+    argument_contains: "UpdateCommand"
+
+  - id: ddb-batch-write
+    category: db-out
+    label: DynamoDB BatchWrite
+    severity: high
+    call_name_regex: "^send$"
+    argument_contains: "BatchWriteCommand"
+
+  - id: ddb-query
+    category: db-in
+    label: DynamoDB Query
+    severity: medium
+    call_name_regex: "^send$"
+    argument_contains: "QueryCommand"
+
+  # Prisma
+  - id: prisma-write
+    category: db-out
+    label: Prisma write
+    severity: high
+    call_name_regex: "^(create|createMany|update|updateMany|upsert|delete|deleteMany)$"
+
+  # Sequelize / TypeORM
+  - id: sequelize-save
+    category: db-out
+    label: Sequelize save/update
+    severity: high
+    call_name_regex: "^(save|update|create|upsert|destroy)$"
+
+  # Raw SQL clients (pg, mysql2, sqlite)
+  - id: sql-query
+    category: db-in
+    label: SQL query()
+    severity: medium
+    call_name_regex: "^(query|execute)$"
+
+  # Mongoose
+  - id: mongoose-save
+    category: db-out
+    label: Mongoose save/insert
+    severity: high
+    call_name_regex: "^(save|create|insertOne|insertMany|updateOne|updateMany)$"
