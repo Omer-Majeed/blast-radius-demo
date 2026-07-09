@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import { v4 as uuid } from 'uuid';
 import { DB_PATH } from './config.js';
+import { initLinkageSchema } from './linkage/storage.js';
 import type {
   Finding, FlowStatus, FlowResult, Repo, RepoStatus, Scan, ScanRepo, ScanStatus,
 } from './types.js';
@@ -13,6 +14,7 @@ export function db(): Database.Database {
     _db.pragma('journal_mode = WAL');
     _db.pragma('foreign_keys = ON');
     initSchema(_db);
+    initLinkageSchema(_db);
   }
   return _db;
 }

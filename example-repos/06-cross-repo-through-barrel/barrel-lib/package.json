@@ -1,0 +1,11 @@
+{
+  "name": "@demo/barrel-lib",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Publishes md5 through a top-level barrel that re-exports internal/hash.ts.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

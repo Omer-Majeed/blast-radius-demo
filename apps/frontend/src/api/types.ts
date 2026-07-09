@@ -79,3 +79,53 @@ export interface SinkDescriptor {
   receiver_regex?: string;
   argument_contains?: string;
 }
+
+// ---------- Linkage ----------
+
+export type LayerId = 'scip' | 'grep' | 'code2dfd';
+export type EdgeType =
+  | 'symbol-import'
+  | 'http-call'
+  | 'db-share'
+  | 'queue-pub-sub'
+  | 'resource-share';
+export type SignalKind =
+  | 'symbol_def'
+  | 'symbol_ref'
+  | 'http_route'
+  | 'http_call'
+  | 'db_write'
+  | 'db_read'
+  | 'queue_pub'
+  | 'queue_sub'
+  | 'resource_ref';
+
+export interface LinkageSignal {
+  rowid?: number;
+  scan_id: string;
+  layer: LayerId;
+  kind: SignalKind;
+  repo_id: string;
+  key: string;
+  file: string;
+  line: number;
+  extra?: Record<string, unknown>;
+}
+
+export interface LinkageEdge {
+  edge_id: string;
+  scan_id: string;
+  from_repo: string;
+  to_repo: string;
+  type: EdgeType;
+  key: string;
+  source_layers: LayerId[];
+  from_signals: LinkageSignal[];
+  to_signals: LinkageSignal[];
+}
+
+export interface LinkageGraphResponse {
+  edges: LinkageEdge[];
+  repos: Array<{ id: string; name: string }>;
+  counts_by_type: Record<string, number>;
+}

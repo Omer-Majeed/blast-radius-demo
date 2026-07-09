@@ -11,6 +11,7 @@ import {
 import { runOpengrep } from './analyzers/opengrep.js';
 import { ensureCpg, runFlowScript } from './analyzers/joern.js';
 import { getRulepack } from './rulepacks.js';
+import { runLinkage } from './linkage/index.js';
 
 /**
  * Kick off a scan (fire-and-forget). Errors are captured to the scan record.
@@ -98,6 +99,20 @@ async function runScan(scanId: string): Promise<void> {
       updateScanRepoStatus(scanId, repoId, 'failed', msg);
       // Continue with next repo.
     }
+  }
+
+  // Linkage track — runs AFTER taint work per user's request, but is
+  // an independent product. A failure here doesn't fail the scan; we
+  // just log it so findings + flows still surface in the UI.
+  try {
+    const scanReloaded = getScan(scanId);
+    const repos = (scanReloaded?.repo_ids ?? [])
+      .map((id) => getRepo(id))
+      .filter((r): r is NonNullable<ReturnType<typeof getRepo>> => r != null);
+    await runLinkage(scanId, repos);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[scan ${scanId}] linkage failed:`, msg);
   }
 
   updateScanStatus(scanId, 'complete');

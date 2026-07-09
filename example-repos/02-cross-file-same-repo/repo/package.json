@@ -1,0 +1,11 @@
+{
+  "name": "case-02-cross-file",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Taint flow across two files in the same repo.",
+  "main": "src/routes.ts",
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "typescript": "^5.4.0"
+  }
+}

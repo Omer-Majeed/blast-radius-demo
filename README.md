@@ -21,6 +21,9 @@ brew install opengrep      # or pipx install opengrep
 # Joern — CPG + data-flow
 brew install joern
 
+# scip-typescript — TS-only SCIP indexer (used by the linkage module)
+npm install -g @sourcegraph/scip-typescript
+
 # Node 20+
 node --version
 ```
@@ -58,9 +61,14 @@ Open the frontend. Workflow:
 1. **Repos** → add one or more repos by local absolute path.
 2. **New scan** → pick repos + rulepacks → **Start scan**.
 3. Watch the scan status. Opengrep runs first (fast), then Joern CPG
-   builds (slow — minutes per repo), then Joern flow analysis per finding.
+   builds (slow — minutes per repo), then Joern flow analysis per
+   finding, and finally the linkage module runs (SCIP over the same
+   repos) as an independent track.
 4. Click **View flow** on a finding to see the reachable paths — with the
    terminal sink highlighted if it matches a descriptor in `sinks/`.
+5. Click **View linkages** on the scan page to see cross-repo
+   relationships (currently only `symbol-import` edges from the SCIP
+   layer; grep and code2DFD layers to follow).
 
 ---
 

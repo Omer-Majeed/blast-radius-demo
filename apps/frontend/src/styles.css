@@ -161,3 +161,61 @@ input[type="text"], input:not([type]) {
   border-radius: 8px;
   background: white;
 }
+
+/* Linkage view */
+.linkage-filters .row.wrap { flex-wrap: wrap; align-items: flex-end; gap: 20px; }
+.linkage-filters label { display: block; margin-bottom: 4px; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.chip {
+  padding: 3px 10px;
+  border: 1.5px solid #d4d4d8;
+  border-radius: 999px;
+  background: white;
+  cursor: pointer;
+  font-size: 12px;
+}
+.chip-active { background: #f4f4f5; font-weight: 600; }
+.linkage-graph-wrapper {
+  height: 65vh;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  background: white;
+  margin-bottom: 16px;
+}
+
+/* Edge drawer */
+.drawer {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  top: 80px;
+  width: 520px;
+  background: white;
+  border: 1px solid #d4d4d8;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  padding: 16px;
+  overflow: auto;
+  z-index: 10;
+}
+.drawer-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f2;
+}
+.signal-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 240px;
+  overflow: auto;
+  border: 1px solid #f0f0f2;
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+.signal-list li { padding: 3px 0; border-bottom: 1px solid #fafafa; }
+.signal-list li:last-child { border-bottom: none; }

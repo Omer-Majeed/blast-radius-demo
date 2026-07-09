@@ -1,0 +1,11 @@
+{
+  "name": "@demo/hash-lib",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Publishes computeSig() using SHA-1 for case 03.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

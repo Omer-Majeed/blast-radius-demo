@@ -6,9 +6,11 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p .",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "test:e2e": "node --import tsx --test tests/e2e.test.ts"
   },
   "dependencies": {
+    "@c4312/scip": "^0.1.0",
     "@fastify/cors": "^9.0.1",
     "better-sqlite3": "^11.3.0",
     "execa": "^9.5.1",

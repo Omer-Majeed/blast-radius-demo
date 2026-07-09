@@ -1,5 +1,6 @@
 import type {
-  Finding, FlowResult, Repo, Rulepack, Scan, ScanRepo, SinkDescriptor,
+  Finding, FlowResult, LinkageEdge, LinkageGraphResponse, Repo, Rulepack,
+  Scan, ScanRepo, SinkDescriptor,
 } from './types';
 
 const base = '/api';
@@ -41,4 +42,10 @@ export const api = {
   // catalog
   listRulepacks: () => req<{ rulepacks: Rulepack[] }>('/rulepacks'),
   listSinks: () => req<{ sinks: SinkDescriptor[] }>('/sinks'),
+
+  // linkage
+  getLinkages: (scanId: string) =>
+    req<LinkageGraphResponse>(`/scans/${scanId}/linkages`),
+  getLinkageEdge: (scanId: string, edgeId: string) =>
+    req<{ edge: LinkageEdge }>(`/scans/${scanId}/linkages/edge/${edgeId}`),
 };

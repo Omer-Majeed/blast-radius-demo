@@ -1,0 +1,11 @@
+{
+  "name": "case-08-fan-out",
+  "version": "0.1.0",
+  "private": true,
+  "description": "One source function feeding two distinct Express sinks.",
+  "main": "src/index.ts",
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "typescript": "^5.4.0"
+  }
+}

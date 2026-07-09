@@ -6,6 +6,8 @@ import { repoRoutes } from './routes/repos.js';
 import { scanRoutes } from './routes/scans.js';
 import { findingRoutes } from './routes/findings.js';
 import { metaRoutes } from './routes/meta.js';
+import { devRoutes } from './routes/dev.js';
+import { linkageRoutes } from './routes/linkages.js';
 
 const fastify = Fastify({ logger: true });
 
@@ -19,6 +21,9 @@ async function main() {
   await fastify.register(scanRoutes, { prefix: '/api/scans' });
   await fastify.register(findingRoutes, { prefix: '/api/findings' });
   await fastify.register(metaRoutes, { prefix: '/api' });
+  await fastify.register(devRoutes, { prefix: '/api/dev' });
+  // Linkages live under /api/scans/:id/linkages* — register with matching prefix.
+  await fastify.register(linkageRoutes, { prefix: '/api/scans' });
 
   fastify.get('/api/health', async () => ({ ok: true }));
 

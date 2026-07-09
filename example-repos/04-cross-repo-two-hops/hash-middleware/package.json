@@ -1,0 +1,14 @@
+{
+  "name": "@demo/hash-middleware",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Middle hop: wraps @demo/hash-lib's sha1() in a signRequest helper.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@demo/hash-lib": "file:../hash-lib"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

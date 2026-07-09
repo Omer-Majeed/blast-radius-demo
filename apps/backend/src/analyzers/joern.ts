@@ -5,10 +5,20 @@ import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { CPG_DIR, JOERN_BIN, JOERN_FLOW_SCRIPT, JOERN_PARSE_BIN, SCAN_DIR } from '../config.js';
 import { classifySink } from './sinks.js';
+import { ensureNpmInstalled, hasFileDeps } from './npm.js';
 import type { FlowNode, FlowPath, FlowResult, Finding } from '../types.js';
 
 /**
  * Build the CPG for a repo if it doesn't already exist.
+ *
+ * npm awareness: for repos with `file:`-linked deps in their
+ * package.json (our cross-repo example-repos, or npm workspaces), we
+ * ensure `node_modules` is present and DO NOT exclude it from the CPG.
+ * This lets Joern's JavaScriptImportResolverPass follow the symlink
+ * into the linked package, resolve the import, and link the cross-file
+ * call so `reachableByFlows` can cross the repo boundary.
+ *
+ * Non-file: repos still exclude node_modules to keep the CPG lean.
  */
 export async function ensureCpg(repoId: string, repoPath: string, _scanId: string): Promise<string> {
   const cpgPath = join(CPG_DIR, `${repoId}.bin`);
@@ -16,13 +26,18 @@ export async function ensureCpg(repoId: string, repoPath: string, _scanId: strin
 
   mkdirSync(CPG_DIR, { recursive: true });
 
-  // The driver-level `--exclude` flag is rejected by current joern-parse.
-  // Instead, pass the repo path as a positional arg, then use
-  // `--frontend-args` to hand `--exclude <path>` down to jssrc2cpg
-  // (matches scip-joern-v1/scripts/05-run-joern-parse.sh).
+  const crossRepoLinked = hasFileDeps(repoPath);
+  if (crossRepoLinked) {
+    await ensureNpmInstalled(repoPath);
+  }
+
   const args = ['--language', 'javascript', '--output', cpgPath, repoPath];
   const nodeModules = join(repoPath, 'node_modules');
-  if (existsSync(nodeModules)) {
+
+  // Only exclude node_modules when the repo has no file: deps. When it
+  // does, we need the symlinks under node_modules to remain in the CPG
+  // for cross-repo import resolution.
+  if (!crossRepoLinked && existsSync(nodeModules)) {
     args.push('--frontend-args', '--exclude', nodeModules);
   }
 

@@ -49,13 +49,20 @@ export default function ScanViewPage() {
 
   return (
     <div className="page">
-      <h1>Scan <span className="mono">{scan.id.slice(0, 8)}</span></h1>
-      <div className="row">
-        <div className={`pill pill-${scan.status}`}>{scan.status}</div>
-        <div className="muted small">
-          started {new Date(scan.created_at).toLocaleString()}
-          {scan.completed_at && ` · finished ${new Date(scan.completed_at).toLocaleString()}`}
+      <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h1>Scan <span className="mono">{scan.id.slice(0, 8)}</span></h1>
+          <div className="row">
+            <div className={`pill pill-${scan.status}`}>{scan.status}</div>
+            <div className="muted small">
+              started {new Date(scan.created_at).toLocaleString()}
+              {scan.completed_at && ` · finished ${new Date(scan.completed_at).toLocaleString()}`}
+            </div>
+          </div>
         </div>
+        <Link to={`/scans/${scan.id}/linkages`}>
+          <button className="primary">View linkages →</button>
+        </Link>
       </div>
       {scan.error && <div className="error">{scan.error}</div>}
 
