@@ -53,7 +53,10 @@ export default function LinkageViewPage() {
       if (fromRepo && e.from_repo !== fromRepo) return false;
       if (toRepo && e.to_repo !== toRepo) return false;
       if (search && !e.key.toLowerCase().includes(search.toLowerCase())) return false;
-      if (!showThirdParty && isThirdParty(e.key)) return false;
+      // Third-party filter applies only to symbol-import edges — the
+      // notion of "third-party" isn't meaningful for HTTP / DB / queue
+      // links, which are inherently first-party.
+      if (!showThirdParty && e.type === 'symbol-import' && isThirdParty(e.key)) return false;
       return true;
     });
   }, [data, enabledTypes, fromRepo, toRepo, search, showThirdParty]);
@@ -173,7 +176,7 @@ export default function LinkageViewPage() {
               checked={showThirdParty}
               onChange={(e) => setShowThirdParty(e.target.checked)}
             />
-            <span className="small">Include third-party symbols (npm shared deps)</span>
+            <span className="small">Include third-party symbols in symbol-import (npm shared deps)</span>
           </label>
         </div>
       </div>

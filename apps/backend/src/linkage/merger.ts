@@ -15,8 +15,8 @@ import type { LinkageEdge, LinkageSignal } from './types.js';
 export function mergeEdges(scanId: string, signals: LinkageSignal[]): LinkageEdge[] {
   return [
     ...mergeSymbolImportEdges(scanId, signals),
+    ...mergeHttpCallEdges(scanId, signals),
     // future:
-    // ...mergeHttpCallEdges(scanId, signals),
     // ...mergeDbShareEdges(scanId, signals),
     // ...mergeQueuePubSubEdges(scanId, signals),
     // ...mergeResourceShareEdges(scanId, signals),
@@ -71,6 +71,59 @@ function mergeSymbolImportEdges(scanId: string, signals: LinkageSignal[]): Linka
   // Deduplicate signal arrays within each edge (multiple refs at
   // different lines for the same key produce distinct signals; keep
   // them all but avoid duplicating identical rowids).
+  for (const edge of edgesByPair.values()) {
+    edge.from_signals = dedupe(edge.from_signals);
+    edge.to_signals = dedupe(edge.to_signals);
+  }
+
+  return [...edgesByPair.values()];
+}
+
+function mergeHttpCallEdges(scanId: string, signals: LinkageSignal[]): LinkageEdge[] {
+  const routesByKey = new Map<string, LinkageSignal[]>();
+  const callsByKey = new Map<string, LinkageSignal[]>();
+
+  for (const s of signals) {
+    if (s.kind === 'http_route') push(routesByKey, s.key, s);
+    else if (s.kind === 'http_call') push(callsByKey, s.key, s);
+  }
+
+  // For each key with a route in one repo and a call from another,
+  // produce one edge per (caller_repo, server_repo) pair. Multiple
+  // routes/calls with the same key from the same pair collapse into
+  // a single edge with all signals attached (drawer will list them).
+  const edgesByPair = new Map<string, LinkageEdge>();
+
+  for (const [key, routes] of routesByKey) {
+    const calls = callsByKey.get(key);
+    if (!calls) continue;
+
+    for (const route of routes) {
+      for (const call of calls) {
+        if (route.repo_id === call.repo_id) continue;
+        // Edge direction: consumer (call side) → provider (route side).
+        const pairKey = `${call.repo_id}::${route.repo_id}::http-call::${key}`;
+        let edge = edgesByPair.get(pairKey);
+        if (!edge) {
+          edge = {
+            edge_id: uuid(),
+            scan_id: scanId,
+            from_repo: call.repo_id,
+            to_repo: route.repo_id,
+            type: 'http-call',
+            key,
+            source_layers: ['grep'],
+            from_signals: [],
+            to_signals: [],
+          };
+          edgesByPair.set(pairKey, edge);
+        }
+        edge.from_signals.push(call);
+        edge.to_signals.push(route);
+      }
+    }
+  }
+
   for (const edge of edgesByPair.values()) {
     edge.from_signals = dedupe(edge.from_signals);
     edge.to_signals = dedupe(edge.to_signals);
