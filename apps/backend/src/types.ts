@@ -82,8 +82,15 @@ export interface LinkedConsumer {
   hop_flow?: HopFlow;                           // populated by hop tracer
 }
 
+export type LinkType = 'http-call' | 'symbol-import';
+
 export interface LinkedConsumersEntry {
+  link_type: LinkType;
+  // For 'http-call':      endpoint like "POST /artifacts"
+  // For 'symbol-import':  full SCIP symbol string of the exported function
   endpoint_key: string;
+  // For 'http-call':      file:line of the enclosing route decorator
+  // For 'symbol-import':  file:line of the exported function's def
   enclosing_route: { file: string; line: number };
   consumers: LinkedConsumer[];
 }

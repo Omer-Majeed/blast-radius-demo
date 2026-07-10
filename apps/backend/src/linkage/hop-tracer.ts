@@ -17,7 +17,7 @@ import {
   getFlow, getRepo, listFindings, saveFlow,
 } from '../storage.js';
 import { classifySink } from '../analyzers/sinks.js';
-import { findLinkedConsumers } from './cross-repo.js';
+import { findLinkedConsumers, findSymbolImportConsumers } from './cross-repo.js';
 import type {
   Finding, FlowNode, FlowPath, FlowResult, HopFlow, HopStopReason, LinkedConsumer,
 } from '../types.js';
@@ -55,37 +55,55 @@ async function enrichFlow(
   const initialVisited = new Set<string>([
     visitedKey(finding.repo_id, finding.file, finding.start_line),
   ]);
+  const entryLocation = { file: finding.file, line: finding.start_line };
 
   const enrichedPaths: FlowPath[] = [];
   for (const path of flow.paths) {
     enrichedPaths.push(
-      await enrichPath(scanId, finding.repo_id, path, 0, initialVisited),
+      await enrichPath(scanId, finding.repo_id, entryLocation, path, 0, initialVisited),
     );
   }
   return { ...flow, paths: enrichedPaths };
 }
 
 /**
- * Given a single path (which may be from a finding's flow or from a
- * hop's flow), attach linked_consumers + recursive hop_flows to its
- * classified terminal.
+ * Attach linked_consumers + recursive hop_flows to a path. Combines
+ * two linkage triggers:
+ *
+ *   - Terminal-triggered:  http-call (via classified sink at terminal)
+ *   - Location-triggered:  symbol-import (via enclosing exported function
+ *                          at the flow's ENTRY location — finding.line or
+ *                          hop entry line)
+ *
+ * `entryLocation` is where THIS flow started. For the origin finding
+ * it's `finding.file:finding.start_line`. For a hop, it's the
+ * consumer's call site. Symbol-import fires when that entry sits
+ * inside an exported function this repo hosts.
  */
 async function enrichPath(
   scanId: string,
   repoId: string,
+  entryLocation: { file: string; line: number },
   path: FlowPath,
   parentDepth: number,
   visited: Set<string>,
 ): Promise<FlowPath> {
   const terminal = path.nodes[path.nodes.length - 1];
-  const linked = findLinkedConsumers(scanId, repoId, {
+
+  // Terminal-triggered (http-call today; more sink categories later).
+  const httpEntries = findLinkedConsumers(scanId, repoId, {
     file: terminal?.file ?? '',
     line: terminal?.line ?? 0,
     sink_category: path.terminal_sink?.category,
   });
-  if (linked.length === 0) return path;
 
-  for (const entry of linked) {
+  // Location-triggered (SCIP symbol-import).
+  const symbolEntries = findSymbolImportConsumers(scanId, repoId, entryLocation);
+
+  const allEntries = [...httpEntries, ...symbolEntries];
+  if (allEntries.length === 0) return path;
+
+  for (const entry of allEntries) {
     for (const consumer of entry.consumers) {
       consumer.hop_flow = await traceHop(
         scanId,
@@ -96,7 +114,7 @@ async function enrichPath(
       );
     }
   }
-  return { ...path, linked_consumers: linked };
+  return { ...path, linked_consumers: allEntries };
 }
 
 /**
@@ -158,9 +176,14 @@ async function traceHop(
   }
 
   // Recurse — enrich each of this hop's paths with THEIR consumers.
+  // The hop's entry location is the consumer call site, so symbol-import
+  // checks in downstream repos work the same as at the origin.
+  const hopEntryLocation = { file: consumer.file, line: consumer.line };
   const hopPaths: FlowPath[] = [];
   for (const p of hopResult.paths) {
-    hopPaths.push(await enrichPath(scanId, consumer.repo_id, p, depth, visited));
+    hopPaths.push(
+      await enrichPath(scanId, consumer.repo_id, hopEntryLocation, p, depth, visited),
+    );
   }
 
   return {

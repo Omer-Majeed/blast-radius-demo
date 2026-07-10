@@ -112,13 +112,20 @@ function CrossRepoCard({
 }) {
   return (
     <div className="card cross-repo-card">
-      {entries.map((entry, i) => (
+      {entries.map((entry, i) => {
+        const isHttp = entry.link_type === 'http-call';
+        const linkLabel = isHttp ? 'HTTP endpoint' : 'Imported symbol';
+        const originLabel = isHttp ? 'Enclosing route' : 'Exported at';
+        const displayKey = isHttp
+          ? entry.endpoint_key
+          : shortSymbol(entry.endpoint_key);
+        return (
         <div key={i}>
           <div className="cross-repo-header">
-            Cross-repo blast radius — <code className="mono">{entry.endpoint_key}</code>
+            Cross-repo blast radius — {linkLabel} <code className="mono">{displayKey}</code>
           </div>
           <div className="muted small">
-            Enclosing route: <span className="mono">{entry.enclosing_route.file}:{entry.enclosing_route.line}</span>
+            {originLabel}: <span className="mono">{entry.enclosing_route.file}:{entry.enclosing_route.line}</span>
           </div>
           <div style={{ marginTop: 10 }}>
             <div className="small" style={{ fontWeight: 600, marginBottom: 6 }}>
@@ -145,7 +152,18 @@ function CrossRepoCard({
             </Link>
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
+}
+
+/**
+ * Compact display for a SCIP symbol string. Strips the leading
+ * `<scheme> <manager> <package> <version>` part and keeps only the
+ * descriptor (function / class#method).
+ */
+function shortSymbol(k: string): string {
+  const parts = k.split(/\s+/);
+  return parts.length >= 5 ? parts.slice(4).join(' ') : k;
 }

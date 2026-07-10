@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api/client';
-import type { Finding, FlowPath, FlowResult, HopStopReason } from '../api/types';
+import type { Finding, FlowPath, FlowResult, HopStopReason, LinkedConsumersEntry } from '../api/types';
 
 export default function TraceViewPage() {
   const { id } = useParams<{ id: string }>();
@@ -175,7 +175,7 @@ function TracePath({ path, depth }: { path: FlowPath; depth: number }) {
                 key={j}
                 repoName={c.repo_name}
                 entry={c.hop_flow.entry}
-                entryVia={entry.endpoint_key}
+                entryVia={formatLinkageLabel(entry)}
                 depth={depth + 1}
                 paths={c.hop_flow.paths}
                 stopReason={c.hop_flow.stop_reason}
@@ -224,6 +224,23 @@ function stopReasonLabel(r: HopStopReason): string {
     case 'no-flow': return 'Joern found no reachable flow from this entry point';
     case 'error': return 'error while tracing this hop';
   }
+}
+
+/**
+ * Compact human label for a cross-repo hop's "why we jumped here" annotation.
+ *
+ *   http-call:     "via HTTP  POST /artifacts"
+ *   symbol-import: "via import  `computeSig`()."  (descriptor tail of the SCIP symbol)
+ */
+function formatLinkageLabel(entry: LinkedConsumersEntry): string {
+  if (entry.link_type === 'http-call') {
+    return `via HTTP  ${entry.endpoint_key}`;
+  }
+  // symbol-import: strip the leading scheme/manager/package/version to
+  // show only the descriptor (function name / class#method).
+  const parts = entry.endpoint_key.split(/\s+/);
+  const descriptor = parts.length >= 5 ? parts.slice(4).join(' ') : entry.endpoint_key;
+  return `via import  ${descriptor}`;
 }
 
 function findingRepoName(f: Finding): string {
