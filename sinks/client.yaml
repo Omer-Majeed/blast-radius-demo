@@ -1,0 +1,50 @@
+# Client-side sinks — where tainted data exits a client (browser or Node client)
+# process. Added for cross-repo trace: once a hash arrives via fetch/axios, we
+# want to see if it lands in one of these storage / navigation / filesystem
+# endpoints in the consumer repo.
+
+sinks:
+  # Browser storage
+  - id: local-storage-set
+    category: storage-out
+    label: localStorage.setItem
+    severity: high
+    call_name_regex: "^setItem$"
+    receiver_regex: "^localStorage\\b"
+
+  - id: session-storage-set
+    category: storage-out
+    label: sessionStorage.setItem
+    severity: medium
+    call_name_regex: "^setItem$"
+    receiver_regex: "^sessionStorage\\b"
+
+  - id: indexeddb-put
+    category: storage-out
+    label: IndexedDB put/add
+    severity: medium
+    call_name_regex: "^(put|add)$"
+    receiver_regex: "objectStore|IDBObjectStore"
+
+  # Browser navigation / DOM writes
+  - id: window-location-navigate
+    category: navigation-out
+    label: window.location navigation
+    severity: high
+    call_name_regex: "^(assign|replace)$"
+    receiver_regex: "^(window\\.location|location)\\b"
+
+  # Node client filesystem sinks
+  - id: fs-write-file
+    category: filesystem-out
+    label: fs.writeFile*
+    severity: high
+    call_name_regex: "^(writeFile|writeFileSync|appendFile|appendFileSync)$"
+    receiver_regex: "^(fs|fsp|fs\\.promises)\\b"
+
+  - id: fs-create-write-stream
+    category: filesystem-out
+    label: fs.createWriteStream
+    severity: high
+    call_name_regex: "^createWriteStream$"
+    receiver_regex: "^fs\\b"

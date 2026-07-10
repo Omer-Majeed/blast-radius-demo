@@ -162,6 +162,138 @@ input[type="text"], input:not([type]) {
   background: white;
 }
 
+/* Cross-repo trace (TraceView page) */
+.trace-timeline { margin-top: 16px; }
+.trace-band-wrapper { margin-bottom: 12px; }
+.trace-connector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  color: #6b7280;
+}
+.trace-connector-arrow {
+  font-size: 18px;
+  color: #2563eb;
+  font-weight: 700;
+}
+.trace-band {
+  background: white;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  padding: 14px 16px;
+  border-left-width: 4px;
+}
+.trace-band-depth-0 { border-left-color: #111827; }
+.trace-band-depth-1 { border-left-color: #2563eb; }
+.trace-band-depth-2 { border-left-color: #7c3aed; }
+.trace-band-depth-3 { border-left-color: #be185d; }
+.trace-band-depth-4 { border-left-color: #ea580c; }
+.trace-band-depth-5 { border-left-color: #6b7280; }
+.trace-band-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f2;
+  margin-bottom: 10px;
+}
+.trace-band-repo {
+  font-weight: 700;
+  font-size: 14px;
+}
+.trace-path {
+  padding: 6px 0;
+  border-bottom: 1px dashed #f4f4f5;
+}
+.trace-path:last-child { border-bottom: none; }
+.trace-nodes {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0;
+}
+.trace-nodes li {
+  padding: 3px 0;
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+.trace-node-file {
+  color: #6b7280;
+  min-width: 220px;
+}
+.trace-node-code { word-break: break-all; }
+.trace-terminal {
+  margin: 8px 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border-left: 3px solid;
+  background: #fafafa;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.trace-terminal.sink-http-out { border-left-color: #ea580c; background: #fff7ed; }
+.trace-terminal.sink-db-out { border-left-color: #be185d; background: #fdf2f8; }
+.trace-terminal.sink-storage-out { border-left-color: #7c3aed; background: #faf5ff; }
+.trace-terminal.sink-filesystem-out { border-left-color: #0891b2; background: #ecfeff; }
+.trace-terminal.sink-navigation-out { border-left-color: #dc2626; background: #fef2f2; }
+.trace-consumers { margin-top: 8px; }
+.trace-stop {
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #f4f4f5;
+  color: #6b7280;
+  font-weight: 600;
+  font-size: 12px;
+  margin: 6px 0;
+  border: 1px dashed #d4d4d8;
+}
+.trace-stop-error, .trace-stop-no-cpg { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+.trace-stop-cycle-detected { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+.pill-hop-depth { background: #e0e7ff; color: #3730a3; }
+
+/* Additional sink pill colors used across FlowView + TraceView. */
+.pill-sink-storage-out { background: #ede9fe; color: #5b21b6; }
+.pill-sink-filesystem-out { background: #cffafe; color: #155e75; }
+.pill-sink-navigation-out { background: #fee2e2; color: #991b1b; }
+
+/* Cross-repo blast-radius card (rendered inside FlowView) */
+.cross-repo-card {
+  border-left: 4px solid #2563eb;
+  background: #eff6ff;
+}
+.cross-repo-header {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.consumer-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.consumer-list li {
+  padding: 8px 10px;
+  border: 1px solid #dbeafe;
+  border-radius: 6px;
+  background: white;
+  margin-bottom: 6px;
+}
+.consumer-snippet {
+  margin-top: 6px;
+  padding: 6px 8px;
+  background: #f4f4f5;
+  border-radius: 4px;
+  font-size: 12px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.pill-linked {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
 /* Linkage view */
 .linkage-filters .row.wrap { flex-wrap: wrap; align-items: flex-end; gap: 20px; }
 .linkage-filters label { display: block; margin-bottom: 4px; }

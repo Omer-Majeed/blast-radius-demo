@@ -12,6 +12,7 @@ import { runOpengrep } from './analyzers/opengrep.js';
 import { ensureCpg, runFlowScript } from './analyzers/joern.js';
 import { getRulepack } from './rulepacks.js';
 import { runLinkage } from './linkage/index.js';
+import { traceAllHops } from './linkage/hop-tracer.js';
 
 /**
  * Kick off a scan (fire-and-forget). Errors are captured to the scan record.
@@ -113,6 +114,17 @@ async function runScan(scanId: string): Promise<void> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error(`[scan ${scanId}] linkage failed:`, msg);
+  }
+
+  // Hop tracer — after linkage. Enriches each finding's flow with
+  // cross-repo attribution AND recursive hop flows (up to depth 10).
+  // The enriched flow is persisted back to the flows table so
+  // /api/findings/:id/flow returns the full trace tree directly.
+  try {
+    await traceAllHops(scanId);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[scan ${scanId}] hop tracing failed:`, msg);
   }
 
   updateScanStatus(scanId, 'complete');

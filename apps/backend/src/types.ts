@@ -55,9 +55,43 @@ export interface FlowNode {
   sink_severity?: string;
 }
 
+export type HopStopReason =
+  | 'depth-reached'
+  | 'cycle-detected'
+  | 'no-cpg'
+  | 'no-flow'
+  | 'error';
+
+export interface HopFlow {
+  repo_id: string;
+  repo_name: string;
+  entry: { file: string; line: number };
+  entry_via: string;                            // e.g. "POST /artifacts"
+  depth: number;
+  paths: FlowPath[];                            // Joern paths in this hop's repo (each may recurse)
+  stop_reason?: HopStopReason;
+}
+
+export interface LinkedConsumer {
+  repo_id: string;
+  repo_name: string;
+  file: string;
+  line: number;
+  snippet: string;
+  layer: 'scip' | 'grep' | 'code2dfd';
+  hop_flow?: HopFlow;                           // populated by hop tracer
+}
+
+export interface LinkedConsumersEntry {
+  endpoint_key: string;
+  enclosing_route: { file: string; line: number };
+  consumers: LinkedConsumer[];
+}
+
 export interface FlowPath {
   nodes: FlowNode[];
   terminal_sink: { id: string; category: string; label: string; severity: string } | null;
+  linked_consumers?: LinkedConsumersEntry[];
 }
 
 export interface FlowResult {

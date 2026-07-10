@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api/client';
-import type { Finding, FlowResult } from '../api/types';
+import type { Finding, FlowResult, LinkedConsumersEntry } from '../api/types';
 import FlowGraph from '../components/FlowGraph';
 
 export default function FlowViewPage() {
@@ -34,7 +34,10 @@ export default function FlowViewPage() {
           </div>
           <div className="finding-snippet mono">{finding.snippet}</div>
         </div>
-        <Link to={`/scans/${finding.scan_id}`}>← back to scan</Link>
+        <div className="row" style={{ gap: 12 }}>
+          <Link to={`/findings/${finding.id}/trace`}>See full trace →</Link>
+          <Link to={`/scans/${finding.scan_id}`}>← back to scan</Link>
+        </div>
       </div>
 
       <h2>Reachable paths ({paths.length})</h2>
@@ -56,6 +59,11 @@ export default function FlowViewPage() {
                 {p.terminal_sink && (
                   <span className={`pill pill-sink-${p.terminal_sink.category}`}>
                     {p.terminal_sink.category}
+                  </span>
+                )}
+                {p.linked_consumers && p.linked_consumers.length > 0 && (
+                  <span className="pill pill-linked">
+                    {p.linked_consumers.reduce((n, e) => n + e.consumers.length, 0)} linked
                   </span>
                 )}
                 <span className="muted small">({p.nodes.length} hops)</span>
@@ -81,10 +89,63 @@ export default function FlowViewPage() {
               <div className="flow-graph-wrapper">
                 <FlowGraph path={activePath} />
               </div>
+
+              {activePath.linked_consumers && activePath.linked_consumers.length > 0 && (
+                <CrossRepoCard
+                  entries={activePath.linked_consumers}
+                  scanId={finding.scan_id}
+                />
+              )}
             </>
           )}
         </>
       )}
+    </div>
+  );
+}
+
+function CrossRepoCard({
+  entries, scanId,
+}: {
+  entries: LinkedConsumersEntry[];
+  scanId: string;
+}) {
+  return (
+    <div className="card cross-repo-card">
+      {entries.map((entry, i) => (
+        <div key={i}>
+          <div className="cross-repo-header">
+            Cross-repo blast radius — <code className="mono">{entry.endpoint_key}</code>
+          </div>
+          <div className="muted small">
+            Enclosing route: <span className="mono">{entry.enclosing_route.file}:{entry.enclosing_route.line}</span>
+          </div>
+          <div style={{ marginTop: 10 }}>
+            <div className="small" style={{ fontWeight: 600, marginBottom: 6 }}>
+              Consumed by ({entry.consumers.length}):
+            </div>
+            <ul className="consumer-list">
+              {entry.consumers.map((c, j) => (
+                <li key={j}>
+                  <div className="row" style={{ gap: 8, alignItems: 'baseline' }}>
+                    <span style={{ fontWeight: 600 }}>{c.repo_name}</span>
+                    <span className="mono small muted">{c.file}:{c.line}</span>
+                    <span className="pill" style={{ marginLeft: 'auto' }}>{c.layer}</span>
+                  </div>
+                  {c.snippet && (
+                    <div className="mono small consumer-snippet">{c.snippet}</div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div style={{ marginTop: 10 }}>
+            <Link to={`/scans/${scanId}/linkages`} className="small">
+              See in linkage graph →
+            </Link>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

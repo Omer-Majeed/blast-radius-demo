@@ -50,14 +50,30 @@ import java.io.PrintWriter
 
     val flowArr = ujson.Arr()
     for (flow <- flows) {
-      // Drop IR operator pseudo-calls (`<operator>.assignment`,
-      // `<operator>.new`, `<operator>.fieldAccess`, ...) from the emitted
-      // path. They represent Joern's internal representation, not real
-      // function calls, and clutter the UI without adding taint info.
-      // If we later add an engineer-mode toggle, we can re-emit these.
+      // Drop Joern IR artifacts from the emitted path. Two families:
+      //
+      //   Operator pseudo-calls
+      //     `<operator>.assignment`, `<operator>.new`,
+      //     `<operator>.fieldAccess`, `<operator>.alloc`, ...
+      //     — Joern's internal representation of language constructs
+      //     that aren't real function calls.
+      //
+      //   Synthetic identifiers
+      //     `_tmp_N`   — object literals / complex expressions get
+      //                  lowered into temp assignments; the temp is
+      //                  never in the source.
+      //     `__ecma_N` — JS-specific temporaries introduced by the
+      //                  jssrc2cpg lowering.
+      //     `<lambda>N`— anonymous function placeholders.
+      //
+      // If we later add an engineer-mode toggle, re-emit these.
       val elements = flow.elements.filterNot {
         case c: io.shiftleft.codepropertygraph.generated.nodes.Call =>
           c.name.startsWith("<operator>")
+        case i: io.shiftleft.codepropertygraph.generated.nodes.Identifier =>
+          i.name.matches("_tmp_\\d+") ||
+          i.name.matches("__ecma_\\d+") ||
+          i.name.startsWith("<lambda>")
         case _ => false
       }
       if (elements.nonEmpty) {

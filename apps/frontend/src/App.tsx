@@ -5,6 +5,7 @@ import ScanViewPage from './pages/ScanView';
 import FlowViewPage from './pages/FlowView';
 import ScansListPage from './pages/ScansList';
 import LinkageViewPage from './pages/LinkageView';
+import TraceViewPage from './pages/TraceView';
 
 export default function App() {
   const loc = useLocation();
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/scans/:id" element={<ScanViewPage />} />
           <Route path="/scans/:id/linkages" element={<LinkageViewPage />} />
           <Route path="/findings/:id/flow" element={<FlowViewPage />} />
+          <Route path="/findings/:id/trace" element={<TraceViewPage />} />
         </Routes>
       </main>
     </div>

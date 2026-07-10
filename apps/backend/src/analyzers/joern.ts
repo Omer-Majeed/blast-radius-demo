@@ -140,7 +140,26 @@ export async function runFlowScript(
       return { nodes, terminal_sink: terminal };
     });
 
-    return { finding_id: rr.finding_id, paths };
+    // Drop paths where source and terminal are on the same file+line
+    // AND the terminal isn't a classified sink. These are Joern-IR
+    // false positives — the source expression fanned out into internal
+    // temps and then "sank" to itself. If a legitimate inline sink
+    // (e.g. `res.json(createHash("sha1").digest())` on one line) ever
+    // shows up, its terminal WILL be classified so it's preserved.
+    const before = paths.length;
+    const cleaned = paths.filter((p) => {
+      const src = p.nodes[0];
+      const term = p.nodes[p.nodes.length - 1];
+      if (!src || !term) return false;
+      const sameLoc = src.file === term.file && src.line === term.line;
+      if (sameLoc && !p.terminal_sink) return false;
+      return true;
+    });
+    if (before !== cleaned.length) {
+      console.log(`[joern] finding ${rr.finding_id}: dropped ${before - cleaned.length} in-place path(s) (source==terminal, unclassified)`);
+    }
+
+    return { finding_id: rr.finding_id, paths: cleaned };
   });
 
   return enriched;
