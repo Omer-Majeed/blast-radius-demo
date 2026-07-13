@@ -229,17 +229,21 @@ function stopReasonLabel(r: HopStopReason): string {
 /**
  * Compact human label for a cross-repo hop's "why we jumped here" annotation.
  *
- *   http-call:     "via HTTP  POST /artifacts"
- *   symbol-import: "via import  `computeSig`()."  (descriptor tail of the SCIP symbol)
+ *   http-call:      "via HTTP     POST /artifacts"
+ *   symbol-import:  "via import   `computeSig`()."   (someone imports us — case 03)
+ *   symbol-callout: "via call to  `reply`()."         (we call something in that repo — case 05)
  */
 function formatLinkageLabel(entry: LinkedConsumersEntry): string {
   if (entry.link_type === 'http-call') {
     return `via HTTP  ${entry.endpoint_key}`;
   }
-  // symbol-import: strip the leading scheme/manager/package/version to
-  // show only the descriptor (function name / class#method).
+  // Both symbol-* variants — strip the SCIP prefix and show only the
+  // descriptor (function name / class#method). The verb differs.
   const parts = entry.endpoint_key.split(/\s+/);
   const descriptor = parts.length >= 5 ? parts.slice(4).join(' ') : entry.endpoint_key;
+  if (entry.link_type === 'symbol-callout') {
+    return `via call to  ${descriptor}`;
+  }
   return `via import  ${descriptor}`;
 }
 

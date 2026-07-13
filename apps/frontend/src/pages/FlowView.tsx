@@ -113,12 +113,18 @@ function CrossRepoCard({
   return (
     <div className="card cross-repo-card">
       {entries.map((entry, i) => {
-        const isHttp = entry.link_type === 'http-call';
-        const linkLabel = isHttp ? 'HTTP endpoint' : 'Imported symbol';
-        const originLabel = isHttp ? 'Enclosing route' : 'Exported at';
-        const displayKey = isHttp
-          ? entry.endpoint_key
-          : shortSymbol(entry.endpoint_key);
+        const linkLabel =
+          entry.link_type === 'http-call' ? 'HTTP endpoint'
+          : entry.link_type === 'symbol-callout' ? 'Called-out symbol'
+          : 'Imported symbol';
+        const originLabel =
+          entry.link_type === 'http-call' ? 'Enclosing route'
+          : entry.link_type === 'symbol-callout' ? 'Call site'
+          : 'Exported at';
+        const displayKey =
+          entry.link_type === 'http-call'
+            ? entry.endpoint_key
+            : shortSymbol(entry.endpoint_key);
         return (
         <div key={i}>
           <div className="cross-repo-header">

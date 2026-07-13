@@ -17,7 +17,9 @@ import {
   getFlow, getRepo, listFindings, saveFlow,
 } from '../storage.js';
 import { classifySink } from '../analyzers/sinks.js';
-import { findLinkedConsumers, findSymbolImportConsumers } from './cross-repo.js';
+import {
+  findImportedCallees, findLinkedConsumers, findSymbolImportConsumers,
+} from './cross-repo.js';
 import type {
   Finding, FlowNode, FlowPath, FlowResult, HopFlow, HopStopReason, LinkedConsumer,
 } from '../types.js';
@@ -97,10 +99,17 @@ async function enrichPath(
     sink_category: path.terminal_sink?.category,
   });
 
-  // Location-triggered (SCIP symbol-import).
+  // Location-triggered (SCIP symbol-import): "someone imports what I define."
   const symbolEntries = findSymbolImportConsumers(scanId, repoId, entryLocation);
 
-  const allEntries = [...httpEntries, ...symbolEntries];
+  // Terminal-triggered (SCIP symbol-callout): "I call something defined
+  // elsewhere; continue the trace in that callee's repo."
+  const calloutEntries = findImportedCallees(scanId, repoId, {
+    file: terminal?.file ?? '',
+    line: terminal?.line ?? 0,
+  });
+
+  const allEntries = [...httpEntries, ...symbolEntries, ...calloutEntries];
   if (allEntries.length === 0) return path;
 
   for (const entry of allEntries) {

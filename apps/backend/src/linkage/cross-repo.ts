@@ -15,23 +15,14 @@
 // depth cap, same cycle detection.
 
 import { db } from '../storage.js';
-import type { LayerId, LinkType } from '../types.js';
+import type { LinkedConsumer, LinkedConsumersEntry } from '../types.js';
 
-export interface LinkedConsumer {
-  repo_id: string;
-  repo_name: string;
-  file: string;
-  line: number;
-  snippet: string;
-  layer: LayerId;
-}
+// Re-export so callers of this module have a single import site. The
+// canonical definitions live in `types.ts` — critically, that copy
+// includes the optional `hop_flow` field the hop tracer sets.
+export type { LinkedConsumer, LinkedConsumersEntry };
 
-export interface LinkedConsumersEntry {
-  link_type: LinkType;
-  endpoint_key: string;
-  enclosing_route: { file: string; line: number };
-  consumers: LinkedConsumer[];
-}
+type LayerId = LinkedConsumer['layer'];
 
 interface Terminal {
   file: string;
@@ -223,6 +214,104 @@ function findHttpConsumers(
       consumers,
     },
   ];
+}
+
+/**
+ * Terminal-triggered lookup — the "callout" direction.
+ *
+ * If the path's terminal is a call to a symbol defined in ANOTHER
+ * registered repo (i.e. an outgoing import from us), find the definer
+ * location so the trace can continue into that repo's CPG.
+ *
+ * Direction is opposite of findSymbolImportConsumers:
+ *   findSymbolImportConsumers → who imports me
+ *   findImportedCallees       → what do I import and call
+ *
+ * The returned entries carry `link_type: 'symbol-callout'` and their
+ * `consumers` array holds the DEFINER's file:line (which Joern's flow
+ * script will seed as a hop entry).
+ */
+export function findImportedCallees(
+  scanId: string,
+  repoId: string,
+  terminal: { file: string; line: number },
+): LinkedConsumersEntry[] {
+  if (!terminal.file || !terminal.line) return [];
+  const d = db();
+
+  // 1. symbol_ref signals at the terminal's exact line — the imported
+  //    functions being called here.
+  const refs = d.prepare(
+    `SELECT DISTINCT key
+       FROM linkage_signals
+      WHERE scan_id = ?
+        AND repo_id = ?
+        AND kind = 'symbol_ref'
+        AND file = ?
+        AND line = ?`
+  ).all(scanId, repoId, terminal.file, terminal.line) as Array<{ key: string }>;
+
+  if (refs.length === 0) return [];
+
+  const entries: LinkedConsumersEntry[] = [];
+  const repoNameStmt = d.prepare('SELECT name FROM repos WHERE id = ?');
+  const toSigStmt = d.prepare(
+    `SELECT s.layer, s.repo_id, s.file, s.line, s.extra_json
+       FROM linkage_edge_signals es
+       JOIN linkage_signals s ON s.rowid = es.signal_rowid
+      WHERE es.edge_id = ? AND es.side = 'to'`
+  );
+
+  for (const ref of refs) {
+    // 2. symbol-import edges pointing FROM this repo with this symbol.
+    //    Their to_repo is where the callee is defined.
+    const edges = d.prepare(
+      `SELECT edge_id, to_repo
+         FROM linkage_edges
+        WHERE scan_id = ?
+          AND type = 'symbol-import'
+          AND from_repo = ?
+          AND key = ?`
+    ).all(scanId, repoId, ref.key) as Array<{ edge_id: string; to_repo: string }>;
+
+    if (edges.length === 0) continue;
+
+    const consumers: LinkedConsumer[] = [];
+    for (const e of edges) {
+      const repoRow = repoNameStmt.get(e.to_repo) as { name: string } | undefined;
+      const repoName = repoRow?.name ?? e.to_repo.slice(0, 8);
+      const toSigs = toSigStmt.all(e.edge_id) as any[];
+      for (const ts of toSigs) {
+        const extra = ts.extra_json ? safeParse(ts.extra_json) : {};
+        const snippet: string =
+          (extra?.snippet as string | undefined) ??
+          (extra?.match as string | undefined) ??
+          '';
+        consumers.push({
+          repo_id: ts.repo_id,
+          repo_name: repoName,
+          file: ts.file,
+          line: ts.line,
+          snippet: snippet.slice(0, 240),
+          layer: ts.layer,
+        });
+      }
+    }
+
+    if (consumers.length === 0) continue;
+
+    entries.push({
+      link_type: 'symbol-callout',
+      endpoint_key: ref.key,
+      // enclosing_route repurposed here to point at the CALLOUT site (in
+      // our repo) — the terminal itself. Distinct from the consumers'
+      // locations which are in the callee's repo.
+      enclosing_route: { file: terminal.file, line: terminal.line },
+      consumers,
+    });
+  }
+
+  return entries;
 }
 
 function safeParse(s: string): any {

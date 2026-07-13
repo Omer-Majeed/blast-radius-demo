@@ -81,7 +81,7 @@ export interface LinkedConsumer {
   hop_flow?: HopFlow;
 }
 
-export type LinkType = 'http-call' | 'symbol-import';
+export type LinkType = 'http-call' | 'symbol-import' | 'symbol-callout';
 
 export interface LinkedConsumersEntry {
   link_type: LinkType;

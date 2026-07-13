@@ -38,11 +38,24 @@ import java.io.PrintWriter
     // line. The previous ±2 line window pulled in unrelated calls on
     // neighbouring lines (e.g. `new Date().toISOString()` picked up when
     // the finding was a SHA-1 hash on the previous line).
-    val sources = cpg.call
+    val callSources = cpg.call
       .filter(c => !c.name.startsWith("<operator>"))
       .filter(c => c.file.name.headOption.exists(_.endsWith(ffile)))
       .filter(_.lineNumber.exists(_ == fline))
       .l
+
+    // Fallback: if the caller seeded us at a Method's declaration line
+    // (e.g. a symbol-callout hop that landed at the callee's def), no
+    // Call nodes will be there — use the method's parameters as sources
+    // instead, so Joern's DDG propagates from parameter bindings through
+    // the body to sinks.
+    val sources: List[io.shiftleft.codepropertygraph.generated.nodes.CfgNode] =
+      if (callSources.nonEmpty) callSources
+      else cpg.method
+        .filter(m => m.filename.endsWith(ffile))
+        .filter(_.lineNumber.exists(_ == fline))
+        .parameter
+        .l
 
     val flows =
       if (sources.isEmpty) List.empty
